@@ -43,10 +43,12 @@ qdocs-search/
 \`\`\`
 
 ### 3. Build the Combined Search Index
-Once your data folders are set up, run the pipeline script. This parses all `searchindex.js` files, builds the highly optimized inverted index (`data/combined-searchindex.json`), and prepares it for the API.
+Once your data folders are set up, run the pipeline script. This parses all `searchindex.js` files, builds the highly optimized inverted index (`public/combined-searchindex.json`), and prepares it for the API.
 \`\`\`bash
 npm run build:search-index
 \`\`\`
+
+> **Skippable for a quick start:** A pre-built `public/combined-searchindex.json` covering the three included Qiskit projects is already committed to the repo. You can skip this step and go straight to step 4.
 
 ### 4. **Run the Development Server:**
    \`\`\`bash
@@ -57,7 +59,61 @@ npm run build:search-index
 
 ---
 
+## � Demos
+
+### Demo 1 — Tokenisation, Stemming & Ranking (CLI)
+
+Runs a batch of representative queries against the live index and prints ranked results with scores, matched terms, and section deep-links. Covers stemming (`classifying` → `classifi`), stop-word filtering, fuzzy typo tolerance (`quantun circut`), and cross-project search.
+
+```bash
+npx tsx scripts/test-search.ts
+```
+
+Expected output (excerpt):
+```
+============================================================
+Query: "quantun circut"  ← deliberate typos
+Tokens: ["quantun", "circut"]
+============================================================
+  #1 [4.21] Quantum Circuits
+       url: /qiskit-machine-learning/apidocs/...
+       terms: quantum, circuit
+```
+
+### Demo 2 — Keyboard Navigation (Browser)
+
+1. Open [http://localhost:3000](http://localhost:3000) with `npm run dev` running.
+2. Click the search box (or press `Tab` to focus it).
+3. Type any query — the dropdown opens after ~300 ms.
+4. Use `↑` / `↓` to move through results; the active row scrolls into view automatically.
+5. Press `Enter` to navigate to the top/selected result.
+6. Press `Escape` to close and blur the input.
+
+---
+
 ## 🏗️ Architecture & Schema Experimentation
+
+```
+ Browser
+   │  keystroke (debounced 300 ms)
+   ▼
+ SearchBox.tsx  (client component)
+   │  GET /api/search?q=…&limit=10
+   ▼
+ app/api/search/route.ts  (Next.js Route Handler — server)
+   │  zod validation → search()
+   ▼
+ src/lib/search-engine.ts
+   │  tokenise → stem → IDF lookup → fuzzy fallback → score → rank
+   ▼
+ src/lib/search-index.ts  (module-level singleton)
+   │  reads public/combined-searchindex.json once on cold start
+   ▼
+ public/combined-searchindex.json  (built by scripts/combine-search-indexes.ts)
+   │  produced from
+   ▼
+ public/<project>/searchindex.js   (Sphinx-generated per project)
+```
 
 A core requirement was to experiment with different JSON schema designs for the search index.
 
@@ -94,8 +150,21 @@ A simple, in-memory telemetry module (`src/lib/telemetry.ts`) tracks:
 - `search_performed`: Query, result count, project filter.
 - `result_selected`: Document clicked and its rank position.
 
-**Data Thinking:** To prevent memory leaks in a long-running Node process, telemetry events are stored in heavily-typed **Circular Buffers** bounded to 1,000 events. 
-*You can view the raw telemetry output at:* `GET /api/telemetry`
+**Data Thinking:** To prevent memory leaks in a long-running Node process, telemetry events are stored in heavily-typed **Circular Buffers** bounded to 1,000 events.
+
+`GET /api/telemetry` returns the full event log:
+```json
+{
+  "searches": [
+    { "event": "search_performed", "timestamp": "…", "query": "quantum circuits", "project": null, "resultCount": 8 }
+  ],
+  "selections": [
+    { "event": "result_selected", "timestamp": "…", "query": "quantum circuits", "docId": "qiskit-nature:12", "rank": 0 }
+  ],
+  "totalSearches": 1,
+  "totalSelections": 1
+}
+```
 
 ---
 
@@ -122,3 +191,4 @@ A simple, in-memory telemetry module (`src/lib/telemetry.ts`) tracks:
 1. **Vector Search (Embeddings):** While TF-IDF is great for exact/fuzzy keyword matches, semantic search (e.g., matching "machine learning" to "AI") requires vector embeddings. I would pipe the Sphinx output through OpenAI/Cohere to generate embeddings and store them in Pinecone or pgvector.
 2. **GitHub Actions / CI/CD:** Automate the `combine-search-indexes` script to run in a GitHub action triggered by webhooks from the upstream documentation repositories.
 3. **Synonym Dictionary:** Implement a custom config file mapping common acronyms (e.g., `QEC` -> `error correction`) and inject them during the tokenization phase.
+4. **Python/Sphinx Generation Pipeline:** The three Qiskit `searchindex.js` files were pre-generated and committed here as representative data. A full pipeline would add a `docs/` directory with `conf.py` and a `Makefile`, and a `scripts/build-sphinx-indexes.sh` wrapper that `pip install`s the source repos, runs `make json` for each, and drops the resulting `searchindex.js` files into the right `public/<project>/` folders — removing the manual step entirely.
