@@ -8,6 +8,7 @@ import {
   useState,
   KeyboardEvent,
 } from "react";
+
 import Box from "@mui/material/Box";
 import { ThemeProvider } from "@mui/material/styles";
 import type { SearchResult } from "@/lib/types";
@@ -16,6 +17,7 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 import { quantinuumTheme } from "@/lib/muiTheme";
 import { SearchInput } from "./SearchInput";
 import { SearchResultList } from "./SearchResultList";
+import { useRouter } from "next/navigation";
 
 /**
  * SearchBox
@@ -31,6 +33,7 @@ import { SearchResultList } from "./SearchResultList";
  *       └── SearchResultItem × N  (individual result rows)
  */
 export function SearchBox() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -113,7 +116,7 @@ export function SearchBox() {
       if (result.url.startsWith("http")) {
         window.open(result.url, "_blank", "noreferrer");
       } else {
-        window.location.href = result.url;
+        router.push(result.url); // <-- Use Next.js router!
       }
     },
     [reportSelection]
