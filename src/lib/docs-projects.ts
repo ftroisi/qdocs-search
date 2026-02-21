@@ -3,7 +3,9 @@
  *
  * Server-side module that enriches the raw ProjectMeta entries from the
  * combined search index with human-readable display names, descriptions,
- * and curated quick-link sections.
+ * and accent colours.  Quick-links come directly from the `suggestedLinks`
+ * field that the pipeline derives from each project's sphinx index, so no
+ * hand-curated per-project config is required here.
  */
 
 import { getProjects } from "./search-index";
@@ -13,38 +15,30 @@ import type { ProjectMeta } from "./types";
 // Static enrichment config
 // ---------------------------------------------------------------------------
 
-interface ProjectLinks {
-  title: string;
-  /** Absolute path (relative to project basePath). */
-  path: string;
-  subtitle: string;
-}
-
 interface ProjectEnrichment {
   displayName: string;
   description: string;
-  links: ProjectLinks[];
   /** Optional hex accent colour used by the logo badge. */
   accentColor?: string;
 }
 
-/** Enrichment for projects. */
-function fallbackEnrichment(project: ProjectMeta): ProjectEnrichment {
-  const displayName = project.id
+/** Derive a human-readable display name from a kebab-case project id. */
+function toDisplayName(id: string): string {
+  return id
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+}
 
+/**
+ * Fallback enrichment — used for all projects that don't have a
+ * hand-curated entry.  Display name is derived from the project id;
+ * description mentions the page count so the card is never completely empty.
+ */
+function fallbackEnrichment(project: ProjectMeta): ProjectEnrichment {
   return {
-    displayName,
-    description: `Documentation for ${displayName} (${project.docCount} pages indexed).`,
-    links: [
-      {
-        title: "Documentation",
-        path: "/index.html",
-        subtitle: `Browse the ${displayName} documentation.`,
-      },
-    ],
+    displayName: toDisplayName(project.id),
+    description: `Documentation for ${toDisplayName(project.id)} (${project.docCount} pages indexed).`,
   };
 }
 
@@ -72,6 +66,10 @@ export interface EnrichedProject extends ProjectMeta {
  * Returns an enriched project list derived from the combined search index.
  * Results are sorted deterministically (alphabetically by id).
  *
+ * Links come from `project.suggestedLinks` which the pipeline populates by
+ * matching well-known docname patterns (getting_started, tutorials/index,
+ * apidocs/<pkg>, etc.) against each project's sphinx index.
+ *
  * This is safe to call from a Next.js Server Component because it reads
  * from module-level state cached by search-index.ts.
  */
@@ -88,11 +86,18 @@ export function getEnrichedProjects(): EnrichedProject[] {
         displayName: enrichment.displayName,
         description: enrichment.description,
         accentColor: enrichment.accentColor ?? "#6f6f6f",
-        links: enrichment.links.map((l) => ({
-          title: l.title,
-          url: `${project.basePath}${l.path}`,
-          subtitle: l.subtitle,
-        })),
+        // Use index-derived links; fall back to the project root if the
+        // pipeline produced none (e.g. a very minimal sphinx build).
+        links:
+          project.suggestedLinks.length > 0
+            ? project.suggestedLinks
+            : [
+                {
+                  title: "Documentation",
+                  url: `${project.basePath}/index.html`,
+                  subtitle: `Browse the ${enrichment.displayName} documentation.`,
+                },
+              ],
       };
     });
 }

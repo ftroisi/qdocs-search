@@ -1,3 +1,20 @@
 {
-  "externalBaseUrl": "https://qiskit-community.github.io/qiskit-machine-learning/"
+  "externalBaseUrl": "https://qiskit-community.github.io/qiskit-machine-learning/",
+  "suggestedLinks": [
+    {
+      "title": "Getting Started",
+      "path": "/getting_started.html",
+      "subtitle": "Set up and run your first quantum machine learning model."
+    },
+    {
+      "title": "Tutorials",
+      "path": "/tutorials/index.html",
+      "subtitle": "Hands-on examples with QNNs, classifiers and kernels."
+    },
+    {
+      "title": "API Reference",
+      "path": "/apidocs/qiskit_machine_learning.html",
+      "subtitle": "Full API documentation for all classes and functions."
+    }
+  ]
 }

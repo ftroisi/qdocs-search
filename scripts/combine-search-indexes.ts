@@ -45,6 +45,16 @@ interface SphinxIndex {
   envversion: Record<string, number>;
 }
 
+/** A quick-link derived from well-known docname patterns in the sphinx index. */
+export interface SuggestedLink {
+  /** Page title taken directly from the sphinx index. */
+  title: string;
+  /** Absolute URL to the rendered page. */
+  url: string;
+  /** Short description of what the page covers. */
+  subtitle: string;
+}
+
 /** Metadata for one indexed project. */
 export interface ProjectMeta {
   /** Unique slug, derived from the directory name (e.g. "qiskit-nature"). */
@@ -65,6 +75,12 @@ export interface ProjectMeta {
   docCount: number;
   /** ISO-8601 timestamp when the sphinx index was last modified on disk. */
   indexedAt: string;
+  /**
+   * Quick-links extracted from the sphinx index by matching well-known
+   * docname patterns.  These are stored so downstream consumers
+   * (e.g. the homepage) can render project cards without hand-curated config.
+   */
+  suggestedLinks: SuggestedLink[];
 }
 
 /** A single indexed document. */
@@ -209,49 +225,83 @@ function mergeInvertedIndex(
 // projectInfo.json helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Shape of each entry in projectInfo.json `suggestedLinks` array.
+ * `path` is relative to the project basePath (e.g. "/getting_started.html").
+ */
+interface ProjectInfoLink {
+  title: string;
+  path: string;
+  subtitle: string;
+}
+
 interface ProjectInfo {
   /** External docs URL used when local HTML is absent, e.g. "https://…". */
   externalBaseUrl?: string;
+  /**
+   * Curated list of quick-links shown on the homepage project card.
+   * Each `path` is relative to the project basePath.
+   */
+  suggestedLinks?: ProjectInfoLink[];
 }
 
 /**
- * Resolve the basePath and isExternal flag for a project directory.
+ * Resolve the basePath, isExternal flag, and suggestedLinks for a project.
  *
- * Priority:
+ * basePath resolution priority:
  *  1. Local HTML present (index.html alongside searchindex.js)  →  local path
  *  2. projectInfo.json with externalBaseUrl                      →  external URL
  *  3. Fallback                                                    →  local path + warning
+ *
+ * suggestedLinks come from projectInfo.json `suggestedLinks`.
+ * Paths are joined with basePath to form absolute URLs.
+ * If none are defined, an empty array is returned and the consumer should fall
+ * back to a sensible default.
  */
 function resolveBasePath(
   projectDir: string,
   projectId: string
-): { basePath: string; isExternal: boolean } {
-  const localIndexHtml = join(projectDir, "index.html");
-  if (existsSync(localIndexHtml)) {
-    return { basePath: `/${projectId}`, isExternal: false };
-  }
-
+): { basePath: string; isExternal: boolean; suggestedLinks: SuggestedLink[] } {
+  // Read projectInfo.json once; used for both basePath and suggestedLinks.
+  let info: ProjectInfo = {};
   const infoPath = join(projectDir, "projectInfo.json");
   if (existsSync(infoPath)) {
     try {
-      const info = JSON.parse(readFileSync(infoPath, "utf8")) as ProjectInfo;
-      if (info.externalBaseUrl) {
-        // Trim trailing slash for consistent URL construction
-        const externalBaseUrl = info.externalBaseUrl.replace(/\/$/, "");
-        console.log(`     ↗  No local HTML — using external base URL: ${externalBaseUrl}`);
-        return { basePath: externalBaseUrl, isExternal: true };
-      }
+      info = JSON.parse(readFileSync(infoPath, "utf8")) as ProjectInfo;
     } catch (err) {
       console.warn(`  ⚠️  Failed to parse projectInfo.json for "${projectId}": ${err}`);
     }
   }
 
-  console.warn(
-    `  ⚠️  "${projectId}" has no local index.html and no externalBaseUrl in projectInfo.json.\n` +
-      `       Search results will link to /${projectId}/… which may 404.\n` +
-      `       Add a projectInfo.json with { "externalBaseUrl": "https://…" } to fix this.`
-  );
-  return { basePath: `/${projectId}`, isExternal: false };
+  // --- Resolve basePath ---
+  let basePath: string;
+  let isExternal: boolean;
+  const localIndexHtml = join(projectDir, "index.html");
+  if (existsSync(localIndexHtml)) {
+    basePath = `/${projectId}`;
+    isExternal = false;
+  } else if (info.externalBaseUrl) {
+    basePath = info.externalBaseUrl.replace(/\/$/, "");
+    isExternal = true;
+    console.log(`     ↗  No local HTML — using external base URL: ${basePath}`);
+  } else {
+    console.warn(
+      `  ⚠️  "${projectId}" has no local index.html and no externalBaseUrl in projectInfo.json.\n` +
+        `       Search results will link to /${projectId}/… which may 404.\n` +
+        `       Add a projectInfo.json with { "externalBaseUrl": "https://…" } to fix this.`
+    );
+    basePath = `/${projectId}`;
+    isExternal = false;
+  }
+
+  // --- Resolve suggestedLinks ---
+  const suggestedLinks: SuggestedLink[] = (info.suggestedLinks ?? []).map((l) => ({
+    title: l.title,
+    url: `${basePath}${l.path}`,
+    subtitle: l.subtitle,
+  }));
+
+  return { basePath, isExternal, suggestedLinks };
 }
 
 // ---------------------------------------------------------------------------
@@ -302,7 +352,7 @@ function main(): void {
     console.log(`  📦 Processing "${projectId}"…`);
 
     const sphinx = parseSphinxIndex(indexPath);
-    const { basePath, isExternal } = resolveBasePath(projectDir, projectId);
+    const { basePath, isExternal, suggestedLinks } = resolveBasePath(projectDir, projectId);
     const docCount = sphinx.filenames.length;
 
     // Record project metadata
@@ -313,7 +363,14 @@ function main(): void {
       isExternal,
       docCount,
       indexedAt: stat.mtime.toISOString(),
+      suggestedLinks,
     });
+
+    console.log(
+      suggestedLinks.length > 0
+        ? `     🔗 ${suggestedLinks.length} suggested link(s): ${suggestedLinks.map((l) => l.title).join(" · ")}`
+        : `     ⚠️  No suggestedLinks defined in projectInfo.json`
+    );
 
     // Build document records
     for (let i = 0; i < docCount; i++) {

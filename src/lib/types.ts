@@ -10,6 +10,16 @@
 // Combined search-index schema (produced by the build pipeline)
 // ---------------------------------------------------------------------------
 
+/** A quick-link derived from well-known docname patterns in the sphinx index. */
+export interface SuggestedLink {
+  /** Page title taken directly from the sphinx index. */
+  title: string;
+  /** Absolute URL to the rendered page. */
+  url: string;
+  /** Short description of what the page covers. */
+  subtitle: string;
+}
+
 export interface ProjectMeta {
   id: string;
   /**
@@ -25,6 +35,11 @@ export interface ProjectMeta {
   isExternal: boolean;
   docCount: number;
   indexedAt: string;
+  /**
+   * Quick-links derived from the sphinx index by matching well-known docname
+   * patterns (getting_started, tutorials/index, apidocs/, etc.).
+   */
+  suggestedLinks: SuggestedLink[];
 }
 
 export interface DocumentRecord {
