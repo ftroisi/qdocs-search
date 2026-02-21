@@ -302,7 +302,7 @@ function main(): void {
   const totalTitles = Object.keys(combined.alltitles).length;
 
   console.log(`
-✅ Combined search index written to ${outputRel}
+   Combined search index written to ${outputRel}
    Projects : ${combined.projects.length}
    Documents: ${totalDocs}
    Terms    : ${totalTerms}
