@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:search-index": "tsx scripts/combine-search-indexes.ts"
   },
   "dependencies": {
     "@cqcl/quantinuum-ui": "^1.26.5",
@@ -33,6 +34,7 @@
     "postcss": "^8",
     "prettier": "^3.3.3",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
