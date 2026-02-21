@@ -121,6 +121,8 @@ export default function Home() {
                   href={`${project.basePath}/index.html`}
                   className="transition hover:opacity-70"
                   aria-label={`${project.displayName} documentation home`}
+                  target={project.isExternal ? "_blank" : undefined}
+                  rel={project.isExternal ? "noreferrer" : undefined}
                 >
                   <ProjectLogo
                     name={project.displayName}
@@ -138,6 +140,8 @@ export default function Home() {
                       <a
                         className="font-semibold tracking-tight text-blue-600 dark:text-blue-300"
                         href={url}
+                        target={project.isExternal ? "_blank" : undefined}
+                        rel={project.isExternal ? "noreferrer" : undefined}
                       >
                         {title}
                       </a>

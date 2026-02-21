@@ -142,6 +142,8 @@ export const SearchResultItem = memo(function SearchResultItem({
                 size="small"
                 clickable
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                target={href.startsWith("http") ? "_blank" : undefined}
+                rel={href.startsWith("http") ? "noreferrer" : undefined}
                 sx={{
                   height: 18,
                   fontSize: "0.6rem",

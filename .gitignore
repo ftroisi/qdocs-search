@@ -36,9 +36,10 @@ yarn-error.log*
 next-env.d.ts
 
 # generated search index (rebuilt via `npm run build:search-index`)
-data/combined-searchindex.json
+public/combined-searchindex.json
 
-# Sphinx HTML build output — generated locally or in CI, not committed.
-# Symlinks in public/ reference this folder; run `npm run build:search-index`
-# after generating the HTML to regenerate the combined index.
+# Sphinx HTML build output — large generated artifacts, not committed.
+# Each project directory in public/ may contain full HTML docs.
+# Run `npm run build:search-index` after rebuilding the HTML to regenerate
+# the combined index.
 html_doc/

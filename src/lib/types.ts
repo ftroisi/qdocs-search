@@ -12,7 +12,17 @@
 
 export interface ProjectMeta {
   id: string;
+  /**
+   * URL base path for this project's docs site.
+   * - Local docs:    "/qiskit-nature"  (relative, served from public/)
+   * - External docs: "https://…"       (absolute, from projectInfo.json)
+   */
   basePath: string;
+  /**
+   * True when basePath is an external URL (no local HTML in public/).
+   * The UI uses this to open links in a new tab.
+   */
+  isExternal: boolean;
   docCount: number;
   indexedAt: string;
 }

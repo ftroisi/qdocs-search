@@ -108,7 +108,13 @@ export function SearchBox() {
       setIsOpen(false);
       setQuery("");
       reportSelection(result, rank);
-      window.location.href = result.url;
+      // External URLs (e.g. docs hosted online rather than in public/) open in
+      // a new tab so the user doesn't lose their place on this site.
+      if (result.url.startsWith("http")) {
+        window.open(result.url, "_blank", "noreferrer");
+      } else {
+        window.location.href = result.url;
+      }
     },
     [reportSelection]
   );
