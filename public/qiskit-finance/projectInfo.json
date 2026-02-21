@@ -1,0 +1,10 @@
+{
+  "externalBaseUrl": "https://qiskit-community.github.io/qiskit-finance/",
+  "suggestedLinks": [
+    {
+      "title": "Getting Started",
+      "path": "/getting_started.html",
+      "subtitle": "Install Qiskit Finance and run your first simulation."
+    }
+  ]
+}

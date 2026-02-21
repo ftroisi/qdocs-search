@@ -1,0 +1,5 @@
+# Ignore all generated Sphinx HTML output in this directory.
+# Only projectInfo.json (the per-project config) is committed.
+*
+!.gitignore
+!projectInfo.json

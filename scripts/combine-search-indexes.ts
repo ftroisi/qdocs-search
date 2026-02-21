@@ -2,12 +2,22 @@
  * combine-search-indexes.ts
  *
  * Pipeline script that discovers all Sphinx-generated searchindex.js files
- * under data/<project>/, parses them, remaps document indices to globally
+ * under public/<project>/, parses them, remaps document indices to globally
  * unique namespaced IDs, merges terms/titleterms/alltitles across projects,
- * and writes a single data/combined-searchindex.json ready for the Next.js
+ * and writes a single public/combined-searchindex.json ready for the Next.js
  * search API.
  *
  * Run with:  npm run build:search-index
+ *
+ * Base-path resolution per project (in priority order):
+ *  1. If public/<project>/index.html exists  →  local path "/<project>"
+ *  2. If public/<project>/projectInfo.json has `externalBaseUrl`  →  that URL
+ *  3. Otherwise a warning is emitted and the local path is used as-is.
+ *
+ * projectInfo.json schema (all fields optional):
+ *  {
+ *    "externalBaseUrl": "https://qiskit-extensions.github.io/qiskit-nature"
+ *  }
  *
  * Output schema (CombinedSearchIndex) is defined below and documented in
  * projects/searchbar.md.
@@ -35,19 +45,42 @@ interface SphinxIndex {
   envversion: Record<string, number>;
 }
 
+/** A quick-link derived from well-known docname patterns in the sphinx index. */
+export interface SuggestedLink {
+  /** Page title taken directly from the sphinx index. */
+  title: string;
+  /** Absolute URL to the rendered page. */
+  url: string;
+  /** Short description of what the page covers. */
+  subtitle: string;
+}
+
 /** Metadata for one indexed project. */
 export interface ProjectMeta {
   /** Unique slug, derived from the directory name (e.g. "qiskit-nature"). */
   id: string;
   /**
-   * URL base path for this project's docs site, e.g. "/qiskit-nature".
-   * All document URLs are relative to this.
+   * URL base path for this project's docs site.
+   * - Local docs:    "/qiskit-nature"  (relative, served from public/)
+   * - External docs: "https://…"       (absolute, from projectInfo.json)
+   * All document URLs are resolved against this.
    */
   basePath: string;
+  /**
+   * True when basePath is an external URL (no local HTML in public/).
+   * The UI uses this to open links in a new tab.
+   */
+  isExternal: boolean;
   /** Number of documents indexed. */
   docCount: number;
   /** ISO-8601 timestamp when the sphinx index was last modified on disk. */
   indexedAt: string;
+  /**
+   * Quick-links extracted from the sphinx index by matching well-known
+   * docname patterns.  These are stored so downstream consumers
+   * (e.g. the homepage) can render project cards without hand-curated config.
+   */
+  suggestedLinks: SuggestedLink[];
 }
 
 /** A single indexed document. */
@@ -189,13 +222,96 @@ function mergeInvertedIndex(
 }
 
 // ---------------------------------------------------------------------------
+// projectInfo.json helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Shape of each entry in projectInfo.json `suggestedLinks` array.
+ * `path` is relative to the project basePath (e.g. "/getting_started.html").
+ */
+interface ProjectInfoLink {
+  title: string;
+  path: string;
+  subtitle: string;
+}
+
+interface ProjectInfo {
+  /** External docs URL used when local HTML is absent, e.g. "https://…". */
+  externalBaseUrl?: string;
+  /**
+   * Curated list of quick-links shown on the homepage project card.
+   * Each `path` is relative to the project basePath.
+   */
+  suggestedLinks?: ProjectInfoLink[];
+}
+
+/**
+ * Resolve the basePath, isExternal flag, and suggestedLinks for a project.
+ *
+ * basePath resolution priority:
+ *  1. Local HTML present (index.html alongside searchindex.js)  →  local path
+ *  2. projectInfo.json with externalBaseUrl                      →  external URL
+ *  3. Fallback                                                    →  local path + warning
+ *
+ * suggestedLinks come from projectInfo.json `suggestedLinks`.
+ * Paths are joined with basePath to form absolute URLs.
+ * If none are defined, an empty array is returned and the consumer should fall
+ * back to a sensible default.
+ */
+function resolveBasePath(
+  projectDir: string,
+  projectId: string
+): { basePath: string; isExternal: boolean; suggestedLinks: SuggestedLink[] } {
+  // Read projectInfo.json once; used for both basePath and suggestedLinks.
+  let info: ProjectInfo = {};
+  const infoPath = join(projectDir, "projectInfo.json");
+  if (existsSync(infoPath)) {
+    try {
+      info = JSON.parse(readFileSync(infoPath, "utf8")) as ProjectInfo;
+    } catch (err) {
+      console.warn(`  ⚠️  Failed to parse projectInfo.json for "${projectId}": ${err}`);
+    }
+  }
+
+  // --- Resolve basePath ---
+  let basePath: string;
+  let isExternal: boolean;
+  const localIndexHtml = join(projectDir, "index.html");
+  if (existsSync(localIndexHtml)) {
+    basePath = `/${projectId}`;
+    isExternal = false;
+  } else if (info.externalBaseUrl) {
+    basePath = info.externalBaseUrl.replace(/\/$/, "");
+    isExternal = true;
+    console.log(`     ↗  No local HTML — using external base URL: ${basePath}`);
+  } else {
+    console.warn(
+      `  ⚠️  "${projectId}" has no local index.html and no externalBaseUrl in projectInfo.json.\n` +
+        `       Search results will link to /${projectId}/… which may 404.\n` +
+        `       Add a projectInfo.json with { "externalBaseUrl": "https://…" } to fix this.`
+    );
+    basePath = `/${projectId}`;
+    isExternal = false;
+  }
+
+  // --- Resolve suggestedLinks ---
+  const suggestedLinks: SuggestedLink[] = (info.suggestedLinks ?? []).map((l) => ({
+    title: l.title,
+    url: `${basePath}${l.path}`,
+    subtitle: l.subtitle,
+  }));
+
+  return { basePath, isExternal, suggestedLinks };
+}
+
+// ---------------------------------------------------------------------------
 // Main pipeline
 // ---------------------------------------------------------------------------
 
 function main(): void {
   const repoRoot = join(__dirname, "..");
-  const dataDir = join(repoRoot, "data");
-  const outputPath = join(dataDir, "combined-searchindex.json");
+  const publicDir = join(repoRoot, "public");
+  const outputPath = join(publicDir, "combined-searchindex.json");
 
   // Use null-prototype objects as inverted-index accumulators to prevent
   // prototype-poisoning from Sphinx term keys like "__proto__" or
@@ -214,29 +330,29 @@ function main(): void {
     alltitles,
   };
 
-  // Discover projects: any sub-directory of data/ that contains searchindex.js
-  const projectDirs = readdirSync(dataDir, { withFileTypes: true })
+  // Discover projects: any sub-directory of public/ that contains searchindex.js
+  const projectDirs = readdirSync(publicDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort(); // deterministic ordering
 
-  if (projectDirs.length === 0) {
-    console.warn(`⚠️  No project directories found under ${relative(repoRoot, dataDir)}/`);
+  const projectsWithIndex = projectDirs.filter((name) =>
+    existsSync(join(publicDir, name, "searchindex.js"))
+  );
+
+  if (projectsWithIndex.length === 0) {
+    console.warn(`⚠️  No project directories with searchindex.js found under ${relative(repoRoot, publicDir)}/`);
     process.exit(0);
   }
 
-  for (const projectId of projectDirs) {
-    const indexPath = join(dataDir, projectId, "searchindex.js");
-
-    if (!existsSync(indexPath)) {
-      console.warn(`  ⚠️  Skipping "${projectId}": no searchindex.js found.`);
-      continue;
-    }
+  for (const projectId of projectsWithIndex) {
+    const projectDir = join(publicDir, projectId);
+    const indexPath = join(projectDir, "searchindex.js");
 
     console.log(`  📦 Processing "${projectId}"…`);
 
     const sphinx = parseSphinxIndex(indexPath);
-    const basePath = `/${projectId}`;
+    const { basePath, isExternal, suggestedLinks } = resolveBasePath(projectDir, projectId);
     const docCount = sphinx.filenames.length;
 
     // Record project metadata
@@ -244,9 +360,17 @@ function main(): void {
     combined.projects.push({
       id: projectId,
       basePath,
+      isExternal,
       docCount,
       indexedAt: stat.mtime.toISOString(),
+      suggestedLinks,
     });
+
+    console.log(
+      suggestedLinks.length > 0
+        ? `     🔗 ${suggestedLinks.length} suggested link(s): ${suggestedLinks.map((l) => l.title).join(" · ")}`
+        : `     ⚠️  No suggestedLinks defined in projectInfo.json`
+    );
 
     // Build document records
     for (let i = 0; i < docCount; i++) {
@@ -296,6 +420,7 @@ function main(): void {
   writeFileSync(outputPath, JSON.stringify(combined, null, 2), "utf8");
 
   const outputRel = relative(repoRoot, outputPath);
+  const externalCount = combined.projects.filter((p) => p.isExternal).length;
   const totalDocs = combined.documents.length;
   const totalTerms = Object.keys(combined.terms).length;
   const totalTitleTerms = Object.keys(combined.titleterms).length;
@@ -303,7 +428,7 @@ function main(): void {
 
   console.log(`
    Combined search index written to ${outputRel}
-   Projects : ${combined.projects.length}
+   Projects : ${combined.projects.length} (${externalCount} external, ${combined.projects.length - externalCount} local)
    Documents: ${totalDocs}
    Terms    : ${totalTerms}
    Titleterms: ${totalTitleTerms}

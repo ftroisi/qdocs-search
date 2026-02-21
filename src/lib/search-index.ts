@@ -1,7 +1,7 @@
 /**
  * search-index.ts
  *
- * Loads data/combined-searchindex.json once at server startup and exposes
+ * Loads public/combined-searchindex.json once at server startup and exposes
  * fast-access data structures used by the search engine.
  *
  * Because Next.js runs server code in a persistent Node.js process between
@@ -26,7 +26,7 @@ import type {
 // Load & parse
 // ---------------------------------------------------------------------------
 
-const INDEX_PATH = join(process.cwd(), "data", "combined-searchindex.json");
+const INDEX_PATH = join(process.cwd(), "public", "combined-searchindex.json");
 
 if (!existsSync(INDEX_PATH)) {
   throw new Error(

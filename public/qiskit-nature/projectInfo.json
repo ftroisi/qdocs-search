@@ -1,0 +1,25 @@
+{
+  "externalBaseUrl": "https://qiskit-community.github.io/qiskit-nature/",
+  "suggestedLinks": [
+    {
+      "title": "Getting Started",
+      "path": "/getting_started.html",
+      "subtitle": "Install Qiskit Nature and run your first simulation."
+    },
+    {
+      "title": "Tutorials",
+      "path": "/tutorials/index.html",
+      "subtitle": "Step-by-step walkthroughs for common use cases."
+    },
+    {
+      "title": "How-To Guides",
+      "path": "/howtos/index.html",
+      "subtitle": "Task-oriented guides for specific scenarios."
+    },
+    {
+      "title": "API Reference",
+      "path": "/apidocs/qiskit_nature.html",
+      "subtitle": "Full API documentation for all classes and functions."
+    }
+  ]
+}

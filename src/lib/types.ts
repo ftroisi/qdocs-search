@@ -10,11 +10,36 @@
 // Combined search-index schema (produced by the build pipeline)
 // ---------------------------------------------------------------------------
 
+/** A quick-link derived from well-known docname patterns in the sphinx index. */
+export interface SuggestedLink {
+  /** Page title taken directly from the sphinx index. */
+  title: string;
+  /** Absolute URL to the rendered page. */
+  url: string;
+  /** Short description of what the page covers. */
+  subtitle: string;
+}
+
 export interface ProjectMeta {
   id: string;
+  /**
+   * URL base path for this project's docs site.
+   * - Local docs:    "/qiskit-nature"  (relative, served from public/)
+   * - External docs: "https://…"       (absolute, from projectInfo.json)
+   */
   basePath: string;
+  /**
+   * True when basePath is an external URL (no local HTML in public/).
+   * The UI uses this to open links in a new tab.
+   */
+  isExternal: boolean;
   docCount: number;
   indexedAt: string;
+  /**
+   * Quick-links derived from the sphinx index by matching well-known docname
+   * patterns (getting_started, tutorials/index, apidocs/, etc.).
+   */
+  suggestedLinks: SuggestedLink[];
 }
 
 export interface DocumentRecord {
