@@ -4,9 +4,6 @@
  * Server-side module that enriches the raw ProjectMeta entries from the
  * combined search index with human-readable display names, descriptions,
  * and curated quick-link sections.
- *
- * Adding a new project to the index automatically surfaces it on the homepage;
- * you only need to add an entry to KNOWN_PROJECTS to customise its metadata.
  */
 
 import { getProjects } from "./search-index";
@@ -31,62 +28,7 @@ interface ProjectEnrichment {
   accentColor?: string;
 }
 
-/**
- * Hand-curated metadata for projects we know about.
- * Keys match the project id (directory name under data/).
- */
-const KNOWN_PROJECTS: Record<string, ProjectEnrichment> = {
-  "qiskit-nature": {
-    displayName: "Qiskit Nature",
-    description:
-      "An open-source framework for quantum simulation of natural sciences, " +
-      "including electronic- and vibrational-structure problems.",
-    accentColor: "#6929c4",
-    links: [
-      {
-        title: "Getting Started",
-        path: "/getting_started.html",
-        subtitle: "Install Qiskit Nature and run your first simulation.",
-      },
-      {
-        title: "Tutorials",
-        path: "/tutorials/index.html",
-        subtitle: "Step-by-step walkthroughs for common use cases.",
-      },
-      {
-        title: "API Reference",
-        path: "/apidocs/qiskit_nature.html",
-        subtitle: "Full API documentation for all classes and functions.",
-      },
-    ],
-  },
-  "qiskit-machine-learning": {
-    displayName: "Qiskit Machine Learning",
-    description:
-      "A library for quantum machine learning that provides a suite of " +
-      "quantum neural networks, classifiers, regressors and kernels.",
-    accentColor: "#0f62fe",
-    links: [
-      {
-        title: "Getting Started",
-        path: "/getting_started.html",
-        subtitle: "Set up and run your first quantum machine learning model.",
-      },
-      {
-        title: "Tutorials",
-        path: "/tutorials/index.html",
-        subtitle: "Hands-on examples with QNNs, classifiers and kernels.",
-      },
-      {
-        title: "API Reference",
-        path: "/apidocs/qiskit_machine_learning.html",
-        subtitle: "Full API documentation for all classes and functions.",
-      },
-    ],
-  },
-};
-
-/** Fallback enrichment for projects not listed in KNOWN_PROJECTS. */
+/** Enrichment for projects. */
 function fallbackEnrichment(project: ProjectMeta): ProjectEnrichment {
   const displayName = project.id
     .split("-")
@@ -140,7 +82,7 @@ export function getEnrichedProjects(): EnrichedProject[] {
     .slice()
     .sort((a, b) => a.id.localeCompare(b.id))
     .map((project) => {
-      const enrichment = KNOWN_PROJECTS[project.id] ?? fallbackEnrichment(project);
+      const enrichment = fallbackEnrichment(project);
       return {
         ...project,
         displayName: enrichment.displayName,
