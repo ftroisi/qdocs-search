@@ -16,6 +16,7 @@ import { QuantinuumLogo } from "./QuantinuumLogo";
 import { QLogo } from "./Q";
 import { TKETLogo } from "./TKETLogo";
 import { GuppyLogo } from "./GuppyLogo";
+import { SearchBox } from "@/components/search/SearchBox";
 
 
 const productsConfig = [
@@ -73,6 +74,9 @@ export default function Home() {
             <p className="text-muted-foreground">
             Explore the documentation, tutorials, and knowledge articles for our products and opensource toolkits at the links below.
             </p>
+            <div className="mt-6">
+              <SearchBox />
+            </div>
             
           </DocsHeaderLeft>
           <DocsHeaderRight className="hidden md:flex">
