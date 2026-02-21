@@ -1,6 +1,11 @@
 "use client";
 
 import { memo } from "react";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import ListItemButton from "@mui/material/ListItemButton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import type { SearchResult } from "@/lib/types";
 import { highlight } from "@/lib/highlight";
 
@@ -39,71 +44,105 @@ export const SearchResultItem = memo(function SearchResultItem({
   const segments = highlight(result.title, queryWords);
 
   return (
-    <div
+    <ListItemButton
       ref={itemRef}
       id={`search-result-${index}`}
       role="option"
       aria-selected={isSelected}
+      selected={isSelected}
       onClick={() => onSelect(result, index)}
       onMouseMove={() => onHover(index)}
-      className={[
-        "px-4 py-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0",
-        "transition-colors",
-        isSelected
-          ? "bg-blue-50 dark:bg-blue-900/30"
-          : "hover:bg-slate-50 dark:hover:bg-slate-800/50",
-      ].join(" ")}
+      sx={{
+        px: 2,
+        py: 1.25,
+        display: "block",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        "&:last-child": { borderBottom: "none" },
+        "&.Mui-selected": {
+          bgcolor: "action.hover",
+        },
+      }}
     >
       {/* Top row: project badge + score */}
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          {result.project}
-        </span>
-        <span className="text-[10px] tabular-nums text-slate-300 dark:text-slate-600">
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+        <Chip
+          label={result.project}
+          size="small"
+          variant="outlined"
+          sx={{
+            height: 18,
+            fontSize: "0.6rem",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            borderRadius: "999px",
+            color: "text.secondary",
+            borderColor: "divider",
+          }}
+        />
+        <Typography
+          component="span"
+          sx={{ fontSize: "0.6rem", color: "text.disabled", fontVariantNumeric: "tabular-nums" }}
+        >
           {result.score.toFixed(1)}
-        </span>
-      </div>
+        </Typography>
+      </Stack>
 
       {/* Title with highlighted tokens */}
-      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 leading-snug">
+      <Typography
+        component="p"
+        sx={{ fontSize: "0.8125rem", fontWeight: 500, lineHeight: 1.4, color: "text.primary" }}
+      >
         {segments.map((seg, i) =>
           seg.highlighted ? (
-            <mark
+            <Box
+              component="mark"
               key={i}
-              className="bg-transparent text-blue-600 dark:text-blue-400 font-semibold not-italic"
+              sx={{ bgcolor: "transparent", color: "primary.main", fontWeight: 700 }}
             >
               {seg.text}
-            </mark>
+            </Box>
           ) : (
             <span key={i}>{seg.text}</span>
           )
         )}
-      </p>
+      </Typography>
 
       {/* Matched terms snippet */}
       {result.matchedTerms.length > 0 && (
-        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 truncate">
+        <Typography
+          noWrap
+          sx={{ mt: 0.5, fontSize: "0.6875rem", color: "text.secondary" }}
+        >
           Matches:{" "}
-          <span className="text-slate-500 dark:text-slate-400">
+          <Box component="span" sx={{ color: "text.primary" }}>
             {result.matchedTerms.join(", ")}
-          </span>
-        </p>
+          </Box>
+        </Typography>
       )}
 
       {/* Section deep-links (up to 2) */}
       {result.sections.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
+        <Stack direction="row" flexWrap="wrap" gap={0.5} mt={0.75}>
           {result.sections.slice(0, 2).map((section) => (
-            <span
+            <Chip
               key={section.title}
-              className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 truncate max-w-[180px]"
+              label={`§ ${section.title}`}
+              size="small"
+              sx={{
+                height: 18,
+                fontSize: "0.6rem",
+                maxWidth: 200,
+                color: "text.secondary",
+                bgcolor: "action.hover",
+                "& .MuiChip-label": { px: 1 },
+              }}
               title={section.title}
-            >
-              § {section.title}
-            </span>
+            />
           ))}
-        </div>
+        </Stack>
       )}
-    </div>
+    </ListItemButton>
   );
 });

@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "@cqcl/quantinuum-ui": "^1.26.5",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.8",
+    "@mui/material": "^7.3.8",
     "@next/third-parties": "15.0.3",
     "@quantinuum/quantinuum-ui": "^2.6.0",
     "lucide-react": "^0.539.0",

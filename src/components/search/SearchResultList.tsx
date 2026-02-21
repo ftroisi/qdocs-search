@@ -1,5 +1,11 @@
 "use client";
 
+import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
+import List from "@mui/material/List";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 import type { SearchResult } from "@/lib/types";
 import { SearchResultItem } from "./SearchResultItem";
 
@@ -32,24 +38,39 @@ export function SearchResultList({
   itemRef,
 }: SearchResultListProps) {
   return (
-    <div
+    <Paper
       id="search-listbox"
+      component="div"
       role="listbox"
       aria-label="Search results"
-      className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl overflow-hidden z-50"
+      elevation={4}
+      sx={{
+        position: "absolute",
+        top: "calc(100% + 6px)",
+        left: 0,
+        right: 0,
+        zIndex: 1300,
+        overflow: "hidden",
+        borderRadius: "var(--radius, 0.5rem)",
+      }}
     >
       {results.length === 0 ? (
-        <p className="px-4 py-6 text-center text-sm text-slate-500">
+        <Typography
+          sx={{ px: 3, py: 4, textAlign: "center", fontSize: "0.875rem", color: "text.secondary" }}
+        >
           No results for{" "}
-          <span className="font-medium text-slate-700 dark:text-slate-300">
+          <Box component="span" sx={{ fontWeight: 600, color: "text.primary" }}>
             &ldquo;{query}&rdquo;
-          </span>
+          </Box>
           .
-        </p>
+        </Typography>
       ) : (
         <>
-          {/* Scrollable results area — max-height caps the dropdown height */}
-          <div className="max-h-[22rem] overflow-y-auto">
+          {/* Scrollable results area */}
+          <List
+            disablePadding
+            sx={{ maxHeight: 352, overflowY: "auto" }}
+          >
             {results.map((result, index) => (
               <SearchResultItem
                 key={result.docId}
@@ -62,19 +83,25 @@ export function SearchResultList({
                 itemRef={itemRef(index)}
               />
             ))}
-          </div>
+          </List>
 
           {/* Footer: hit count + keyboard hint */}
-          <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 flex items-center justify-between">
-            <span className="text-[10px] text-slate-400">
+          <Divider />
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ px: 2, py: 0.75, bgcolor: "action.hover" }}
+          >
+            <Typography sx={{ fontSize: "0.6rem", color: "text.disabled" }}>
               {results.length} of {total} result{total !== 1 ? "s" : ""}
-            </span>
-            <span className="text-[10px] text-slate-400 hidden sm:block">
+            </Typography>
+            <Typography sx={{ fontSize: "0.6rem", color: "text.disabled", display: { xs: "none", sm: "block" } }}>
               ↑↓ navigate &nbsp;·&nbsp; ↵ open &nbsp;·&nbsp; Esc close
-            </span>
-          </div>
+            </Typography>
+          </Stack>
         </>
       )}
-    </div>
+    </Paper>
   );
 }

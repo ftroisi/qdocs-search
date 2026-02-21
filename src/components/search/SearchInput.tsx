@@ -1,7 +1,11 @@
 "use client";
 
 import { forwardRef, KeyboardEvent } from "react";
-import { SearchIcon, Loader2Icon } from "lucide-react";
+import InputBase from "@mui/material/InputBase";
+import InputAdornment from "@mui/material/InputAdornment";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
+import SearchIcon from "@mui/icons-material/Search";
 
 interface SearchInputProps {
   value: string;
@@ -23,37 +27,58 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     ref
   ) {
     return (
-      <div className="relative flex items-center w-full h-12 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 overflow-hidden">
-        <SearchIcon
-          aria-hidden="true"
-          className="absolute left-4 w-5 h-5 text-slate-400 pointer-events-none"
-        />
-        <input
-          ref={ref}
-          type="text"
+      <Paper
+        elevation={0}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          height: 48,
+          borderRadius: "var(--radius, 0.5rem)",
+          border: "1px solid",
+          borderColor: "divider",
+          px: 1.5,
+          transition: "box-shadow 150ms, border-color 150ms",
+          "&:focus-within": {
+            borderColor: "primary.main",
+            boxShadow: "0 0 0 2px rgba(24,24,27,0.12)",
+          },
+        }}
+      >
+        <InputAdornment position="start" sx={{ pointerEvents: "none" }}>
+          <SearchIcon fontSize="small" sx={{ color: "text.secondary" }} />
+        </InputAdornment>
+
+        <InputBase
+          inputRef={ref}
+          fullWidth
           autoComplete="off"
-          spellCheck={false}
-          className="w-full h-full pl-12 pr-12 bg-transparent outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm"
+          inputProps={{
+            spellCheck: false,
+            role: "combobox",
+            "aria-label": "Search documentation",
+            "aria-autocomplete": "list",
+            "aria-expanded": isOpen,
+            "aria-controls": "search-listbox",
+            "aria-activedescendant": activeDescendant,
+          }}
           placeholder="Search documentation…"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
-          // ARIA combobox pattern
-          role="combobox"
-          aria-label="Search documentation"
-          aria-autocomplete="list"
-          aria-expanded={isOpen}
-          aria-controls="search-listbox"
-          aria-activedescendant={activeDescendant}
+          sx={{ fontSize: 14, ml: 0.5 }}
         />
+
         {isLoading && (
-          <Loader2Icon
-            aria-label="Loading…"
-            className="absolute right-4 w-5 h-5 text-slate-400 animate-spin"
-          />
+          <InputAdornment position="end">
+            <CircularProgress
+              size={16}
+              aria-label="Loading…"
+              sx={{ color: "text.secondary" }}
+            />
+          </InputAdornment>
         )}
-      </div>
+      </Paper>
     );
   }
 );

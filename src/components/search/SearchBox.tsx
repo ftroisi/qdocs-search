@@ -8,9 +8,12 @@ import {
   useState,
   KeyboardEvent,
 } from "react";
+import Box from "@mui/material/Box";
+import { ThemeProvider } from "@mui/material/styles";
 import type { SearchResult } from "@/lib/types";
 import { useSearch } from "@/hooks/useSearch";
 import { useClickOutside } from "@/hooks/useClickOutside";
+import { quantinuumTheme } from "@/lib/muiTheme";
 import { SearchInput } from "./SearchInput";
 import { SearchResultList } from "./SearchResultList";
 
@@ -138,32 +141,34 @@ export function SearchBox() {
       : undefined;
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-2xl mx-auto">
-      <SearchInput
-        ref={inputRef}
-        value={query}
-        isLoading={isLoading}
-        isOpen={isOpen}
-        activeDescendant={activeDescendant}
-        onChange={setQuery}
-        onKeyDown={handleKeyDown}
-        onFocus={() => {
-          if (results.length > 0) setIsOpen(true);
-        }}
-      />
-
-      {isOpen && query.trim() && (
-        <SearchResultList
-          results={results}
-          selectedIndex={selectedIndex}
-          query={query}
-          queryWords={queryWords}
-          total={meta?.total ?? results.length}
-          onSelect={handleSelect}
-          onHover={handleHover}
-          itemRef={itemRef}
+    <ThemeProvider theme={quantinuumTheme}>
+      <Box ref={containerRef} sx={{ position: "relative", width: "100%", maxWidth: 672 }}>
+        <SearchInput
+          ref={inputRef}
+          value={query}
+          isLoading={isLoading}
+          isOpen={isOpen}
+          activeDescendant={activeDescendant}
+          onChange={setQuery}
+          onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (results.length > 0) setIsOpen(true);
+          }}
         />
-      )}
-    </div>
+
+        {isOpen && query.trim() && (
+          <SearchResultList
+            results={results}
+            selectedIndex={selectedIndex}
+            query={query}
+            queryWords={queryWords}
+            total={meta?.total ?? results.length}
+            onSelect={handleSelect}
+            onHover={handleHover}
+            itemRef={itemRef}
+          />
+        )}
+      </Box>
+    </ThemeProvider>
   );
 }
