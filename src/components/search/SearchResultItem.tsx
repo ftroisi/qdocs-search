@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import React, { memo } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -122,25 +122,40 @@ export const SearchResultItem = memo(function SearchResultItem({
         </Typography>
       )}
 
-      {/* Section deep-links (up to 2) */}
+      {/* Section deep-links (up to 2).
+          Each chip links directly to the matched anchor within the page so
+          the user can jump straight to the relevant section. We stop event
+          propagation so that clicking a chip does not also trigger the
+          parent ListItemButton's onClick (which would navigate to the root). */}
       {result.sections.length > 0 && (
         <Stack direction="row" flexWrap="wrap" gap={0.5} mt={0.75}>
-          {result.sections.slice(0, 2).map((section) => (
-            <Chip
-              key={section.title}
-              label={`§ ${section.title}`}
-              size="small"
-              sx={{
-                height: 18,
-                fontSize: "0.6rem",
-                maxWidth: 200,
-                color: "text.secondary",
-                bgcolor: "action.hover",
-                "& .MuiChip-label": { px: 1 },
-              }}
-              title={section.title}
-            />
-          ))}
+          {result.sections.slice(0, 2).map((section) => {
+            const href = section.anchor
+              ? `${result.url}#${section.anchor}`
+              : result.url;
+            return (
+              <Chip
+                key={section.title}
+                component="a"
+                href={href}
+                label={`§ ${section.title}`}
+                size="small"
+                clickable
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                sx={{
+                  height: 18,
+                  fontSize: "0.6rem",
+                  maxWidth: 200,
+                  color: "text.secondary",
+                  bgcolor: "action.hover",
+                  textDecoration: "none",
+                  "& .MuiChip-label": { px: 1 },
+                  "&:hover": { bgcolor: "action.selected" },
+                }}
+                title={section.title}
+              />
+            );
+          })}
         </Stack>
       )}
     </ListItemButton>

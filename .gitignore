@@ -37,3 +37,8 @@ next-env.d.ts
 
 # generated search index (rebuilt via `npm run build:search-index`)
 data/combined-searchindex.json
+
+# Sphinx HTML build output — generated locally or in CI, not committed.
+# Symlinks in public/ reference this folder; run `npm run build:search-index`
+# after generating the HTML to regenerate the combined index.
+html_doc/
