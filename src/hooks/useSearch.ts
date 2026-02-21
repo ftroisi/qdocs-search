@@ -20,7 +20,7 @@ export interface UseSearchReturn {
  */
 export function useSearch(query: string): UseSearchReturn {
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [meta, setMeta] = useState<SearchResponse["meta"] | null>(null);
 
   useEffect(() => {
@@ -29,6 +29,7 @@ export function useSearch(query: string): UseSearchReturn {
     if (!trimmed) {
       setResults([]);
       setMeta(null);
+      setIsLoading(false);
       return;
     }
 
