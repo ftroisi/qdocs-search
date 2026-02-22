@@ -19,12 +19,12 @@ The goal of this project is to embed a server-side search bar into `src/app/page
 
 ## Deliverables
 
-1. A branch corresponding to the source code.
+- A branch corresponding to the source code.
 
-1. A slide deck summarizing and desribing key challenges and design decisions to build server-side search component. Emphasize any design decisions that resolve a performance bottleneck.
+- A slide deck summarizing and desribing key challenges and design decisions to build server-side search component. Emphasize any design decisions that resolve a performance bottleneck.
 
-1. Summarize how the chosen search results improve the user experience for the end users of the documentation platform.
+- Summarize how the chosen search results improve the user experience for the end users of the documentation platform.
 
-1. Add a forward-looking write-up on how this would scale as more projects are added, and as documentation search terms increase. For example, would we need to change the JSON schema or use a production-ready database.
+- Add a forward-looking write-up on how this would scale as more projects are added, and as documentation search terms increase. For example, would we need to change the JSON schema or use a production-ready database.
 
-1. Describe potential integration tests you can use to test build quality and page links.
+- Describe potential integration tests you can use to test build quality and page links.

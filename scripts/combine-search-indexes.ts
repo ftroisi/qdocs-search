@@ -11,12 +11,19 @@
  *
  * Base-path resolution per project (in priority order):
  *  1. If public/<project>/index.html exists  →  local path "/<project>"
- *  2. If public/<project>/projectInfo.json has `externalBaseUrl`  →  that URL
+ *  2. If public/<project>/projectInfo.json has `externalBaseUrl`  ->  that URL
  *  3. Otherwise a warning is emitted and the local path is used as-is.
  *
  * projectInfo.json schema (all fields optional):
  *  {
- *    "externalBaseUrl": "https://qiskit-extensions.github.io/qiskit-nature"
+ *    "externalBaseUrl": "https://qiskit-extensions.github.io/qiskit-nature",
+ *    "suggestedLinks": [
+ *      {
+ *        "title": "Getting Started",
+ *        "path": "/getting_started.html",
+ *        "subtitle": "Install Qiskit Nature and run your first simulation."
+ *      }
+ *    ]
  *  }
  *
  * Output schema (CombinedSearchIndex) is defined below and documented in
@@ -130,17 +137,17 @@ export interface CombinedSearchIndex {
   /** Flat list of every document across all projects. */
   documents: DocumentRecord[];
   /**
-   * Inverted term index: lowercase term → sorted list of document IDs.
+   * Inverted term index: lowercase term -> sorted list of document IDs.
    * Source: Sphinx `terms` field (body text tokens).
    */
   terms: Record<string, string[]>;
   /**
-   * Inverted title-term index: lowercase term → sorted list of document IDs.
+   * Inverted title-term index: lowercase term -> sorted list of document IDs.
    * Source: Sphinx `titleterms` field (heading tokens).
    */
   titleterms: Record<string, string[]>;
   /**
-   * Human-readable section titles → list of {docId, anchor}.
+   * Human-readable section titles -> list of {docId, anchor}.
    * Enables the UI to surface exact section matches and deep-link to anchors.
    */
   alltitles: Record<string, TitleEntry[]>;
@@ -249,9 +256,9 @@ interface ProjectInfo {
  * Resolve the basePath, isExternal flag, and suggestedLinks for a project.
  *
  * basePath resolution priority:
- *  1. Local HTML present (index.html alongside searchindex.js)  →  local path
- *  2. projectInfo.json with externalBaseUrl                      →  external URL
- *  3. Fallback                                                    →  local path + warning
+ *  1. Local HTML present (index.html alongside searchindex.js)  ->  local path
+ *  2. projectInfo.json with externalBaseUrl                     ->  external URL
+ *  3. Fallback                                                  ->  local path + warning
  *
  * suggestedLinks come from projectInfo.json `suggestedLinks`.
  * Paths are joined with basePath to form absolute URLs.
@@ -283,11 +290,11 @@ function resolveBasePath(
   } else if (info.externalBaseUrl) {
     basePath = info.externalBaseUrl.replace(/\/$/, "");
     isExternal = true;
-    console.log(`     ↗  No local HTML — using external base URL: ${basePath}`);
+    console.log(`     📍  No local HTML — using external base URL: ${basePath}`);
   } else {
     console.warn(
       `  ⚠️  "${projectId}" has no local index.html and no externalBaseUrl in projectInfo.json.\n` +
-        `       Search results will link to /${projectId}/… which may 404.\n` +
+        `       Search results will link to /${projectId}/... which may 404.\n` +
         `       Add a projectInfo.json with { "externalBaseUrl": "https://…" } to fix this.`
     );
     basePath = `/${projectId}`;
@@ -349,7 +356,7 @@ function main(): void {
     const projectDir = join(publicDir, projectId);
     const indexPath = join(projectDir, "searchindex.js");
 
-    console.log(`  📦 Processing "${projectId}"…`);
+    console.log(`  📦 Processing "${projectId}"...`);
 
     const sphinx = parseSphinxIndex(indexPath);
     const { basePath, isExternal, suggestedLinks } = resolveBasePath(projectDir, projectId);
@@ -366,11 +373,13 @@ function main(): void {
       suggestedLinks,
     });
 
-    console.log(
-      suggestedLinks.length > 0
-        ? `     🔗 ${suggestedLinks.length} suggested link(s): ${suggestedLinks.map((l) => l.title).join(" · ")}`
-        : `     ⚠️  No suggestedLinks defined in projectInfo.json`
-    );
+    if (suggestedLinks.length > 0) {
+      console.log(
+        `     🔗 ${suggestedLinks.length} suggested link(s): ${suggestedLinks.map((l) => l.title).join(" · ")}`
+      );
+    } else {
+      console.warn(`⚠️  No suggestedLinks defined in projectInfo.json`);
+    }
 
     // Build document records
     for (let i = 0; i < docCount; i++) {
@@ -403,7 +412,7 @@ function main(): void {
     }
 
     console.log(
-      `     ✓ ${docCount} documents, ` +
+      `     📄 ${docCount} documents, ` +
         `${Object.keys(sphinx.terms).length} term entries, ` +
         `${Object.keys(sphinx.titleterms).length} title-term entries`
     );

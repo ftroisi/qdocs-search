@@ -67,8 +67,7 @@ export interface EnrichedProject extends ProjectMeta {
  * Results are sorted deterministically (alphabetically by id).
  *
  * Links come from `project.suggestedLinks` which the pipeline populates by
- * matching well-known docname patterns (getting_started, tutorials/index,
- * apidocs/<pkg>, etc.) against each project's sphinx index.
+ * reading what was the projectInfo metadata.
  *
  * This is safe to call from a Next.js Server Component because it reads
  * from module-level state cached by search-index.ts.

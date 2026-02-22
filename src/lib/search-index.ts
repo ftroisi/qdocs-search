@@ -6,7 +6,7 @@
  *
  * Because Next.js runs server code in a persistent Node.js process between
  * requests, module-level state is an effective and zero-dependency singleton
- * cache.  The index is ~1.9 MB on disk; loading it once is negligible.
+ * cache. The index is about 1.9 MB on disk.
  *
  * If the combined file is missing, the module throws at import time so the
  * misconfiguration is loud rather than silently returning no results.
@@ -40,8 +40,7 @@ const index = JSON.parse(raw) as CombinedSearchIndex;
 
 if (index.version !== "1") {
   throw new Error(
-    `[search-index] Unsupported schema version "${index.version}". ` +
-      `Expected "1".`
+    `[search-index] Unsupported schema version "${index.version}". Expected "1".`
   );
 }
 
@@ -73,12 +72,12 @@ export function getProject(id: string): ProjectMeta | undefined {
   return index.projects.find((p) => p.id === id);
 }
 
-/** Inverted body-text index: term → sorted doc-ID array. */
+/** Inverted body-text index: term -> sorted doc-ID array. */
 export function getTermDocs(term: string): string[] {
   return index.terms[term] ?? [];
 }
 
-/** Inverted title/heading index: term → sorted doc-ID array. */
+/** Inverted title/heading index: term -> sorted doc-ID array. */
 export function getTitleTermDocs(term: string): string[] {
   return index.titleterms[term] ?? [];
 }
