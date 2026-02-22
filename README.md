@@ -19,15 +19,23 @@ The search engine is designed to dynamically discover and index Sphinx projects.
   \`\`\`json
   {
     "externalBaseUrl": "https://qiskit-community.github.io/qiskit-nature/",
+    "externalDocsPath": "/user-guide",
     "suggestedLinks": [
       {
         "title": "Getting Started",
         "path": "/getting_started.html",
-        "subtitle": "Install Qiskit Finance and run your first simulation."
+        "subtitle": "Install Qiskit Nature and run your first simulation."
       }
     ]
   }
   \`\`\`
+
+  | Field | Required | Description |
+  |---|---|---|
+  | `externalBaseUrl` | No | Root URL of the hosted docs (e.g. `https://docs.example.com`). Used as the base for resolving search-result URLs when no local HTML build is present. |
+  | `externalDocsPath` | No | Sub-path within `externalBaseUrl` where the docs actually live (e.g. `/user-guide`). Use this when the Sphinx build is hosted at a subdirectory of the domain. If omitted, `externalBaseUrl` is used as-is. The pipeline exposes this as the `docsPath` field on `ProjectMeta`; `basePath` always points to the index root used for asset resolution. |
+  | `suggestedLinks` | No | Quick-links shown on the homepage project card. Each `path` is relative to `externalBaseUrl`. |
+
 - **Full Sphinx HTML Build (Optional):** If you include the rest of the generated HTML files (not only `searchindex.js`), the build pipeline will automatically copy them to the Next.js `public/` folder so they are served locally. If omitted, the UI gracefully falls back to linking the user to the `externalBaseUrl` specified in `projectInfo.json`. If that is not present, a 404 error is shown.
 
 *Example directory structure:*
