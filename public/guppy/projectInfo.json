@@ -1,0 +1,15 @@
+{
+  "externalBaseUrl": "https://docs.quantinuum.com/guppy/",
+  "suggestedLinks": [
+    {
+      "title": "Get Started",
+      "path": "/getting_started.html",
+      "subtitle": "Learn the basics of the Guppy programming language."
+    },
+    {
+      "title": "Language Guide",
+      "path": "/language_guide/language_guide_index.html",
+      "subtitle": "Explore all of Guppy's features."
+    }
+  ]
+}

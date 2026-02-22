@@ -10,11 +10,9 @@ import {
     DocsHeaderRight,
     DocsHeaderSubtitle,
 } from "@quantinuum/quantinuum-ui";
-  import Image from "next/image";
-  
-import { useEffect } from "react";
+
 import { useRouter, usePathname } from "next/navigation";
-import { QLogo } from "./Q";
+import { QLogo } from "../assets/Q";
 
 export default function NotFoundPage() {
     const router = useRouter()

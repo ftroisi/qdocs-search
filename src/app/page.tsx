@@ -12,8 +12,8 @@ import {
   DocsHelpCard
 } from "@quantinuum/quantinuum-ui";
 import { LifeBuoyIcon, BookIcon } from "lucide-react";
-import { QuantinuumLogo } from "./QuantinuumLogo";
-import { QLogo } from "./Q";
+import { QuantinuumLogo } from "../assets/QuantinuumLogo";
+import { QLogo } from "../assets/Q";
 import { SearchBox } from "@/components/search/SearchBox";
 import { getEnrichedProjects } from "@/lib/docs-projects";
 

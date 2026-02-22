@@ -1,0 +1,16 @@
+{
+  "externalBaseUrl": "https://docs.quantinuum.com/tket/",
+  "externalDocsPath": "/user-guide",
+  "suggestedLinks": [
+    {
+      "title": "Get Started with TKET",
+      "path": "/user-guide",
+      "subtitle": "Getting started tutorial showing basic usage of pytket."
+    },
+    {
+      "title": "Documentation for TKET",
+      "path": "/",
+      "subtitle": "Overview of all TKET documentation including the user guide, API documentation, and developer blog."
+    }
+  ]
+}

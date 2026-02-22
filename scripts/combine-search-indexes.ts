@@ -74,6 +74,13 @@ export interface ProjectMeta {
    */
   basePath: string;
   /**
+   * The docs may be located in a subdomain of the external site (e.g. "https://docs.quantinuum.com/tket/user-guide")
+   * - Local docs: This path is the same as basePath (e.g. "/qiskit-nature") since local HTML is always served from public/.
+   * - External docs: Can be either the same as basePath or different if projectInfo.json specifies an externalDocsPath (e.g. "https://docs.quantinuum.com/tket/user-guide").
+   * This URL is used for directing users to the docs from search results and project cards
+   */
+  docsPath: string;
+  /**
    * True when basePath is an external URL (no local HTML in public/).
    * The UI uses this to open links in a new tab.
    */
@@ -245,6 +252,8 @@ interface ProjectInfoLink {
 interface ProjectInfo {
   /** External docs URL used when local HTML is absent, e.g. "https://…". */
   externalBaseUrl?: string;
+  /** The externalDocsPath is the subdirectory within the externalBaseUrl where docs are hosted. */
+  externalDocsPath?: string;
   /**
    * Curated list of quick-links shown on the homepage project card.
    * Each `path` is relative to the project basePath.
@@ -268,7 +277,7 @@ interface ProjectInfo {
 function resolveBasePath(
   projectDir: string,
   projectId: string
-): { basePath: string; isExternal: boolean; suggestedLinks: SuggestedLink[] } {
+): { basePath: string; docsPath: string; isExternal: boolean; suggestedLinks: SuggestedLink[] } {
   // Read projectInfo.json once; used for both basePath and suggestedLinks.
   let info: ProjectInfo = {};
   const infoPath = join(projectDir, "projectInfo.json");
@@ -282,22 +291,26 @@ function resolveBasePath(
 
   // --- Resolve basePath ---
   let basePath: string;
+  let docsPath: string;
   let isExternal: boolean;
   const localIndexHtml = join(projectDir, "index.html");
   if (existsSync(localIndexHtml)) {
     basePath = `/${projectId}`;
+    docsPath = basePath;
     isExternal = false;
   } else if (info.externalBaseUrl) {
     basePath = info.externalBaseUrl.replace(/\/$/, "");
+    docsPath = info.externalDocsPath ? join(basePath, info.externalDocsPath) : basePath;
     isExternal = true;
     console.log(`     📍  No local HTML — using external base URL: ${basePath}`);
   } else {
     console.warn(
-      `  ⚠️  "${projectId}" has no local index.html and no externalBaseUrl in projectInfo.json.\n` +
-        `       Search results will link to /${projectId}/... which may 404.\n` +
-        `       Add a projectInfo.json with { "externalBaseUrl": "https://…" } to fix this.`
+        `     ⚠️  "${projectId}" has no local index.html and no externalBaseUrl in projectInfo.json.\n` +
+        `         Search results will link to /${projectId}/... which may 404.\n` +
+        `         Add a projectInfo.json with { "externalBaseUrl": "https://…" } to fix this.`
     );
     basePath = `/${projectId}`;
+    docsPath = basePath;
     isExternal = false;
   }
 
@@ -308,7 +321,7 @@ function resolveBasePath(
     subtitle: l.subtitle,
   }));
 
-  return { basePath, isExternal, suggestedLinks };
+  return { basePath, docsPath, isExternal, suggestedLinks };
 }
 
 // ---------------------------------------------------------------------------
@@ -359,7 +372,7 @@ function main(): void {
     console.log(`  📦 Processing "${projectId}"...`);
 
     const sphinx = parseSphinxIndex(indexPath);
-    const { basePath, isExternal, suggestedLinks } = resolveBasePath(projectDir, projectId);
+    const { basePath, docsPath, isExternal, suggestedLinks } = resolveBasePath(projectDir, projectId);
     const docCount = sphinx.filenames.length;
 
     // Record project metadata
@@ -367,6 +380,7 @@ function main(): void {
     combined.projects.push({
       id: projectId,
       basePath,
+      docsPath,
       isExternal,
       docCount,
       indexedAt: stat.mtime.toISOString(),
@@ -378,7 +392,7 @@ function main(): void {
         `     🔗 ${suggestedLinks.length} suggested link(s): ${suggestedLinks.map((l) => l.title).join(" · ")}`
       );
     } else {
-      console.warn(`⚠️  No suggestedLinks defined in projectInfo.json`);
+      console.warn(`     ⚠️  No suggestedLinks defined in projectInfo.json`);
     }
 
     // Build document records
@@ -388,7 +402,7 @@ function main(): void {
         project: projectId,
         filename: sphinx.filenames[i],
         title: stripHtml(sphinx.titles[i] ?? ""),
-        url: filenameToUrl(basePath, sphinx.filenames[i]),
+        url: filenameToUrl(docsPath, sphinx.filenames[i]),
       });
     }
 
