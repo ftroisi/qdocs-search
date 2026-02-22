@@ -90,13 +90,7 @@ export function getEnrichedProjects(): EnrichedProject[] {
         links:
           project.suggestedLinks.length > 0
             ? project.suggestedLinks
-            : [
-                {
-                  title: "Documentation",
-                  url: `${project.basePath}/index.html`,
-                  subtitle: `Browse the ${enrichment.displayName} documentation.`,
-                },
-              ],
+            : [],
       };
     });
 }
