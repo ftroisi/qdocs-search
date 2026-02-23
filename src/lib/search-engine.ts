@@ -151,7 +151,7 @@ export function search(query: string, options: SearchOptions = {}): SearchResult
   const termKeys = getAllTermKeys();
   const titleTermKeys = getAllTitleTermKeys();
 
-  // Per-document accumulated score map: docId → score
+  // Per-document accumulated score map: docId -> score
   const scores = new Map<string, number>();
   // Per-document set of matched stems (for result annotation)
   const matchedMap = new Map<string, Set<string>>();

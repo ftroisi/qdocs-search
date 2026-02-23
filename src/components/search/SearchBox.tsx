@@ -102,7 +102,6 @@ export function SearchBox() {
           break;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isOpen, results, selectedIndex]
   );
 
@@ -116,7 +115,7 @@ export function SearchBox() {
       if (result.url.startsWith("http")) {
         window.open(result.url, "_blank", "noreferrer");
       } else {
-        router.push(result.url); // <-- Use Next.js router!
+        router.push(result.url);
       }
     },
     [reportSelection]

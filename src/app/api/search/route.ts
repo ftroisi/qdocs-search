@@ -69,7 +69,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const allResults = search(q, { project, limit: 500 }); // over-fetch for total count
   const limited = allResults.slice(0, limit);
 
-  // Log telemetry
+  // Log telemetry — call the module directly; no HTTP round-trip needed server-side
   recordSearchPerformed(q, project ?? null, limited.length);
 
   const durationMs = Date.now() - start;
