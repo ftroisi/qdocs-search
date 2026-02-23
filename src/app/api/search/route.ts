@@ -66,6 +66,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   // Run the search
+  // Over-fetch to populate meta.total. Cap at 500 — pathological queries
+  // matching thousands of docs are unlikely in this corpus, and returning
+  // exact counts beyond 500 has no UX value.
   const allResults = search(q, { project, limit: 500 }); // over-fetch for total count
   const limited = allResults.slice(0, limit);
 

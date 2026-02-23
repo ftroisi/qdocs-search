@@ -76,7 +76,13 @@ const STOP_WORDS = new Set([
 // Tokenisation helpers
 // ---------------------------------------------------------------------------
 
-/** Split a raw query string into cleaned, stemmed tokens. */
+/**
+ * Split a raw query into cleaned, stop-word-filtered, Porter-stemmed tokens.
+ *
+ * Use this when you only need stems (e.g. index building).
+ * Use {@link tokeniseWithRaw} instead when you also need the original
+ * surface form for highlighting or display purposes.
+ */
 export function tokenise(query: string): string[] {
   return query
     .toLowerCase()
@@ -85,7 +91,7 @@ export function tokenise(query: string): string[] {
     .map((t) => PorterStemmer.stem(t));
 }
 
-/** Like tokenise() but also return the raw (unstemmed) tokens for display. */
+/** Like {@link tokenise} but also return the raw (unstemmed) tokens for display. */
 export function tokeniseWithRaw(query: string): Array<{ raw: string; stem: string }> {
   return query
     .toLowerCase()
@@ -142,6 +148,17 @@ export interface SearchOptions {
   limit?: number;
 }
 
+/**
+ * Search the combined index and return ranked results.
+ *
+ * @param query   - Raw user query string (e.g. "quantun circuits").
+ * @param options - Optional project scope and result limit.
+ * @returns Array of SearchResult, sorted by score descending then title ascending
+ * for stable ordering.  Empty array if the query produces no tokens after stop-word removal.
+ *
+ * @example
+ *   const results = search("hamiltonian simulation", { project: "tket", limit: 10 });
+ */
 export function search(query: string, options: SearchOptions = {}): SearchResult[] {
   const { project, limit = DEFAULT_LIMIT } = options;
 
@@ -240,6 +257,8 @@ export function search(query: string, options: SearchOptions = {}): SearchResult
   // --- Apply all-tokens bonus ---
   for (const [docId, matchedStems] of tokenMatchSets) {
     // Doc matches all unique query stems
+    // Only apply the bonus for multi-token queries; a single-token query trivially
+    // "matches all tokens" so the bonus would be noise rather than signal.
     if (uniqueStems.size > 1 && matchedStems.size === uniqueStems.size) {
       scores.set(docId, (scores.get(docId) ?? 0) * ALL_TOKENS_BONUS);
     }

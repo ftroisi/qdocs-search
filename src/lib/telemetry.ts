@@ -22,12 +22,23 @@ import type {
 // Circular buffer
 // ---------------------------------------------------------------------------
 
+/**
+ * Fixed-capacity ring buffer that overwrites the oldest entry when full.
+ *
+ * Guarantees O(1) push and O(N) iteration.  Memory usage is bounded by
+ * `capacity` regardless of total event volume, making it suitable for a
+ * long-running server process.
+ */
 class CircularBuffer<T> {
   private buf: T[] = [];
   private head = 0;
 
   constructor(private readonly capacity: number) {}
 
+  /**
+   * Insert `item` into the buffer.
+   * If the buffer is at capacity, the oldest item is silently overwritten.
+   */
   push(item: T): void {
     if (this.buf.length < this.capacity) {
       this.buf.push(item);

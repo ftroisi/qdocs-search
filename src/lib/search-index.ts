@@ -56,7 +56,9 @@ export const docMap = new Map<string, DocumentRecord>(
 );
 
 /**
- * totalDocs is used for IDF calculations.
+ * Total number of indexed documents across all projects.
+ * Used as the corpus size N in the IDF formula:
+ *   idf = log((N + 1) / (docCount + 1)) + 1
  */
 export const totalDocs = index.documents.length;
 
@@ -64,15 +66,24 @@ export const totalDocs = index.documents.length;
 // Public accessors
 // ---------------------------------------------------------------------------
 
+/** Return metadata for all indexed projects. */
 export function getProjects(): ProjectMeta[] {
   return index.projects;
 }
 
+/**
+ * Return metadata for a single project by ID, or `undefined` if the
+ * project is not in the index.
+ */
 export function getProject(id: string): ProjectMeta | undefined {
   return index.projects.find((p) => p.id === id);
 }
 
-/** Inverted body-text index: term -> sorted doc-ID array. */
+/**
+ * Return the list of document IDs that contain `term` in their body text.
+ * IDs are in lexicographic order (not ranked); the search engine applies
+ * IDF weighting separately.
+ */
 export function getTermDocs(term: string): string[] {
   return index.terms[term] ?? [];
 }
