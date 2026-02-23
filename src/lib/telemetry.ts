@@ -109,6 +109,7 @@ export function getSummary(): {
   totalSearches: number;
   totalSelections: number;
   recentSearches: SearchPerformedEvent[];
+  selectEvents: ResultSelectedEvent[];
   topQueries: Array<{ query: string; count: number }>;
 } {
   const searches = searchEvents.toArray();
@@ -125,6 +126,10 @@ export function getSummary(): {
     totalSearches: searchEvents.size,
     totalSelections: selectEvents.size,
     recentSearches: searches.slice(-10),
+    selectEvents: selectEvents.toArray().map((e) => ({
+      ...e,
+      rank: e.rank + 1, // convert to 1-based rank for easier reading
+    })),
     topQueries,
   };
 }
