@@ -58,10 +58,8 @@ export const SearchResultItem = memo(function SearchResultItem({
         display: "block",
         borderBottom: "1px solid",
         borderColor: "divider",
-        "&:last-child": { borderBottom: "none" },
-        "&.Mui-selected": {
-          bgcolor: "action.hover",
-        },
+        bgcolor: isSelected ? "action.hover" : "background.paper",
+        "&:last-child": { borderBottom: "none" }
       }}
     >
       {/* Top row: project badge + score */}
